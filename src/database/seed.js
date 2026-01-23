@@ -1,35 +1,73 @@
-import { database } from './index';
+import { db } from './db';
+import { exercises, muscleGroups } from './schema';
+import { openDatabaseSync } from 'expo-sqlite';
+
+// SQL para criar tabelas manualmente (Garante que existem)
+const createTablesSql = `
+  CREATE TABLE IF NOT EXISTS muscle_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    image_url TEXT
+  );
+  CREATE TABLE IF NOT EXISTS exercises (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    media_url TEXT,
+    instructions TEXT,
+    muscle_group_id INTEGER
+  );
+`;
 
 export async function seedDatabase() {
-    await database.write(async () => {
-        // 1. Limpar banco (opcional, bom para testes)
-        await database.get('exercises').query().destroyAllPermanently();
-        await database.get('muscle_groups').query().destroyAllPermanently();
+    const expoDb = openDatabaseSync('gymguide.db');
 
-        // 2. Criar Grupo Muscular (Ex: Peito)
-        const chestGroup = await database.get('muscle_groups').create(group => {
-            group.name = 'Peitoral';
-            group.slug = 'peito';
-            group.imageUrl = 'https://example.com/chest.png';
-        });
+    try {
+        // 1. Criar Tabelas
+        await expoDb.execAsync(createTablesSql);
 
-        // 3. Criar Exercício (Ex: Supino Reto)
-        await database.get('exercises').create(exercise => {
-            exercise.name = 'Supino Reto com Barra';
-            exercise.mediaUrl = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtY3l6Y3l6Y3l6/giphy.gif';
-            exercise.instructions = ['Deite-se no banco', 'Segure a barra', 'Empurre para cima'];
-            exercise.createdAt = Date.now();
-            exercise.updatedAt = Date.now();
-        });
+        // 2. Limpar dados antigos (Reset)
+        await db.delete(exercises);
+        await db.delete(muscleGroups);
 
-        // 4. Criar Outro Exercício
-        await database.get('exercises').create(exercise => {
-            exercise.name = 'Flexão de Braço';
-            exercise.instructions = ['Mãos no chão', 'Desça o peito', 'Suba'];
-            exercise.createdAt = Date.now();
-            exercise.updatedAt = Date.now();
-        });
-    });
+        console.log('🧹 Banco limpo!');
 
-    console.log('🌱 Dados de seed plantados com sucesso!');
+        // 3. Inserir Grupos Musculares
+        const peito = await db.insert(muscleGroups).values({
+            name: 'Peitoral',
+            imageUrl: 'https://example.com/chest.png'
+        }).returning(); // Retorna o dado criado para pegarmos o ID
+
+        const costas = await db.insert(muscleGroups).values({
+            name: 'Dorsal',
+            imageUrl: 'https://example.com/back.png'
+        }).returning();
+
+        // 4. Inserir Exercícios
+        await db.insert(exercises).values([
+            {
+                name: 'Supino Reto',
+                mediaUrl: 'https://media.giphy.com/supino.gif',
+                instructions: JSON.stringify(['Deite no banco', 'Empurre a barra']),
+                muscleGroupId: peito[0].id
+            },
+            {
+                name: 'Flexão de Braço',
+                mediaUrl: 'https://media.giphy.com/pushup.gif',
+                instructions: JSON.stringify(['Mãos no chão', 'Desça o corpo']),
+                muscleGroupId: peito[0].id
+            },
+            {
+                name: 'Puxada Alta',
+                mediaUrl: 'https://media.giphy.com/pullup.gif',
+                instructions: JSON.stringify(['Puxe a barra até o peito']),
+                muscleGroupId: costas[0].id
+            }
+        ]);
+
+        console.log('🌱 Seed realizado com sucesso!');
+        return true;
+    } catch (error) {
+        console.error('Erro no seed:', error);
+        return false;
+    }
 }

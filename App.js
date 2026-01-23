@@ -1,54 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, Button, FlatList, Alert } from 'react-native';
-import { DatabaseProvider } from '@nozbe/watermelondb/react';
-import { database } from './src/database';
+import { db } from './src/database/db';
+import { exercises } from './src/database/schema';
 import { seedDatabase } from './src/database/seed';
 
+// O Drizzle é agnóstico de framework, usamos useEffect padrão para buscar dados
 const DebugScreen = () => {
-  const [exercises, setExercises] = useState([]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Função para buscar dados do banco
+  // Função para ler o banco
   const refreshData = async () => {
-    const allExercises = await database.get('exercises').query().fetch();
-    setExercises(allExercises);
+    try {
+      // SELECT * FROM exercises
+      const allExercises = await db.select().from(exercises);
+      setData(allExercises);
+    } catch (e) {
+      console.log("Tabela ainda não existe ou erro de leitura", e);
+    }
   };
 
-  // Carrega dados ao abrir
+  // Carrega ao abrir
   useEffect(() => {
     refreshData();
   }, []);
 
   const handleSeed = async () => {
     setLoading(true);
-    try {
-      await seedDatabase(); // Roda nosso script
-      await refreshData();  // Atualiza a lista na tela
-      Alert.alert('Sucesso', 'Dados gerados!');
-    } catch (e) {
-      Alert.alert('Erro', e.message);
-    } finally {
-      setLoading(false);
+    const success = await seedDatabase();
+    if (success) {
+      await refreshData();
+      Alert.alert('Sucesso', 'Banco recriado com Drizzle!');
+    } else {
+      Alert.alert('Erro', 'Falha ao criar dados.');
     }
+    setLoading(false);
   };
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>🛠️ Painel de Debug</Text>
-      <Text style={styles.subtitle}>Total Exercícios: {exercises.length}</Text>
+      <Text style={styles.title}>🦕 Drizzle ORM Debug</Text>
+      <Text style={styles.subtitle}>Total Exercícios: {data.length}</Text>
 
       <View style={styles.buttonContainer}>
-        <Button title={loading ? "Gerando..." : "Gerar Dados de Teste"} onPress={handleSeed} />
+        <Button
+          title={loading ? "Criando Tabelas..." : "Criar Banco e Dados"}
+          onPress={handleSeed}
+          color="#841584"
+        />
       </View>
 
       <FlatList
-        data={exercises}
-        keyExtractor={item => item.id}
+        data={data}
+        keyExtractor={item => String(item.id)}
         style={styles.list}
         renderItem={({ item }) => (
           <View style={styles.item}>
             <Text style={styles.itemTitle}>{item.name}</Text>
-            <Text style={styles.itemSub}>ID: {item.id}</Text>
+            <Text style={styles.itemSub}>ID: {item.id} | Grupo ID: {item.muscleGroupId}</Text>
           </View>
         )}
       />
@@ -58,16 +67,14 @@ const DebugScreen = () => {
 
 export default function App() {
   return (
-    <DatabaseProvider database={database}>
-      <SafeAreaView style={styles.container}>
-        <DebugScreen />
-      </SafeAreaView>
-    </DatabaseProvider>
+    <SafeAreaView style={styles.container}>
+      <DebugScreen />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F2F5', padding: 20 },
+  container: { flex: 1, backgroundColor: '#F0F2F5', padding: 20, paddingTop: 50 },
   card: { flex: 1, backgroundColor: 'white', borderRadius: 12, padding: 16, elevation: 2 },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 8, color: '#1a1a1a' },
   subtitle: { fontSize: 16, color: '#666', marginBottom: 20 },
