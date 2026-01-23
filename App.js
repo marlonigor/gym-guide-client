@@ -1,86 +1,124 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, Button, FlatList, Alert } from 'react-native';
-import { db } from './src/database/db';
-import { exercises } from './src/database/schema';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Screens
+import HomeScreen from './src/features/muscles/screens/HomeScreen';
+import ExercisesScreen from './src/features/exercises/screens/ExercisesScreen';
+import ExerciseDetailScreen from './src/features/exercises/screens/ExerciseDetailScreen';
+
+// Database
 import { seedDatabase } from './src/database/seed';
+import { colors } from './src/theme';
 
-// O Drizzle é agnóstico de framework, usamos useEffect padrão para buscar dados
-const DebugScreen = () => {
-  const [data, setData] = useState([]);
+const Stack = createNativeStackNavigator();
+
+// Tela de Setup inicial (apenas para debug/dev)
+function SetupScreen({ onComplete }) {
   const [loading, setLoading] = useState(false);
-
-  // Função para ler o banco
-  const refreshData = async () => {
-    try {
-      // SELECT * FROM exercises
-      const allExercises = await db.select().from(exercises);
-      setData(allExercises);
-    } catch (e) {
-      console.log("Tabela ainda não existe ou erro de leitura", e);
-    }
-  };
-
-  // Carrega ao abrir
-  useEffect(() => {
-    refreshData();
-  }, []);
 
   const handleSeed = async () => {
     setLoading(true);
     const success = await seedDatabase();
-    if (success) {
-      await refreshData();
-      Alert.alert('Sucesso', 'Banco recriado com Drizzle!');
-    } else {
-      Alert.alert('Erro', 'Falha ao criar dados.');
-    }
     setLoading(false);
+
+    if (success) {
+      Alert.alert('Sucesso!', 'Banco de dados populado.', [
+        { text: 'Continuar', onPress: onComplete }
+      ]);
+    } else {
+      Alert.alert('Erro', 'Falha ao popular o banco.');
+    }
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>🦕 Drizzle ORM Debug</Text>
-      <Text style={styles.subtitle}>Total Exercícios: {data.length}</Text>
+    <View style={styles.setupContainer}>
+      <Text style={styles.setupTitle}>🏋️ GymGuide</Text>
+      <Text style={styles.setupSubtitle}>Primeira vez? Vamos criar o banco de dados.</Text>
 
-      <View style={styles.buttonContainer}>
-        <Button
-          title={loading ? "Criando Tabelas..." : "Criar Banco e Dados"}
-          onPress={handleSeed}
-          color="#841584"
-        />
-      </View>
+      <TouchableOpacity
+        style={[styles.setupButton, loading && styles.setupButtonDisabled]}
+        onPress={handleSeed}
+        disabled={loading}
+      >
+        <Text style={styles.setupButtonText}>
+          {loading ? 'Criando...' : 'Inicializar Banco'}
+        </Text>
+      </TouchableOpacity>
 
-      <FlatList
-        data={data}
-        keyExtractor={item => String(item.id)}
-        style={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.itemTitle}>{item.name}</Text>
-            <Text style={styles.itemSub}>ID: {item.id} | Grupo ID: {item.muscleGroupId}</Text>
-          </View>
-        )}
-      />
+      <TouchableOpacity style={styles.skipButton} onPress={onComplete}>
+        <Text style={styles.skipButtonText}>Já tenho dados → Pular</Text>
+      </TouchableOpacity>
     </View>
   );
-};
+}
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+
+  // Em produção, você pode verificar se o banco já tem dados
+  // e pular a tela de setup automaticamente
+
+  if (!isReady) {
+    return <SetupScreen onComplete={() => setIsReady(true)} />;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <DebugScreen />
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Exercises" component={ExercisesScreen} />
+        <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F2F5', padding: 20, paddingTop: 50 },
-  card: { flex: 1, backgroundColor: 'white', borderRadius: 12, padding: 16, elevation: 2 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 8, color: '#1a1a1a' },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 20 },
-  buttonContainer: { marginBottom: 20 },
-  list: { flex: 1 },
-  item: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  itemTitle: { fontSize: 16, fontWeight: '600' },
-  itemSub: { fontSize: 12, color: '#999' }
+  setupContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  setupTitle: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  setupSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  setupButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  setupButtonDisabled: {
+    opacity: 0.6,
+  },
+  setupButtonText: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  skipButton: {
+    padding: 12,
+  },
+  skipButtonText: {
+    color: colors.textMuted,
+    fontSize: 14,
+  },
 });
