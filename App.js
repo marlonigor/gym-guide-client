@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, Button, FlatList, Alert } from 'react-native';
-import { DatabaseProvider } from '@nozbe/watermelondb/DatabaseProvider';
+import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { database } from './src/database';
 import { seedDatabase } from './src/database/seed';
 
