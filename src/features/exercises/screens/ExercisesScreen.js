@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { db } from '../../../database/db';
-import { exercises } from '../../../database/schema';
-import { eq } from 'drizzle-orm';
+import { getExercisesByMuscleGroup } from '../../../services/exercises.service';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
 
 export default function ExercisesScreen({ route, navigation }) {
@@ -16,10 +14,7 @@ export default function ExercisesScreen({ route, navigation }) {
 
     const loadExercises = async () => {
         try {
-            const data = await db
-                .select()
-                .from(exercises)
-                .where(eq(exercises.muscleGroupId, muscleGroupId));
+            const data = await getExercisesByMuscleGroup(muscleGroupId);
             setExerciseList(data);
         } catch (error) {
             console.log('Erro ao carregar exercícios:', error);

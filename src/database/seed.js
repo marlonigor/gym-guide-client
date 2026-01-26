@@ -1,8 +1,8 @@
 import { db } from './db';
-import { exercises, muscleGroups, equipments } from './schema';
+import { exercises, muscleGroups, equipments, subMuscles, exerciseTargets, exerciseEquipments } from './schema';
 import { openDatabaseSync } from 'expo-sqlite';
 
-// SQL para criar tabelas
+// SQL para criar tabelas (Alinhado com schema.js)
 const createTablesSql = `
   CREATE TABLE IF NOT EXISTS muscle_groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,98 +11,154 @@ const createTablesSql = `
     image_url TEXT,
     icon TEXT
   );
+
   CREATE TABLE IF NOT EXISTS sub_muscles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     group_id INTEGER,
     name TEXT NOT NULL,
-    description TEXT
+    description TEXT,
+    FOREIGN KEY (group_id) REFERENCES muscle_groups (id)
   );
+
   CREATE TABLE IF NOT EXISTS equipments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     icon TEXT
   );
+
   CREATE TABLE IF NOT EXISTS exercises (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     media_url TEXT,
     instructions TEXT,
-    muscle_group_id INTEGER
+    muscle_group_id INTEGER,
+    FOREIGN KEY (muscle_group_id) REFERENCES muscle_groups (id)
+  );
+
+  CREATE TABLE IF NOT EXISTS exercise_targets (
+    exercise_id INTEGER,
+    sub_muscle_id INTEGER,
+    target_type TEXT DEFAULT 'primary',
+    FOREIGN KEY (exercise_id) REFERENCES exercises (id),
+    FOREIGN KEY (sub_muscle_id) REFERENCES sub_muscles (id)
+  );
+
+  CREATE TABLE IF NOT EXISTS exercise_equipments (
+    exercise_id INTEGER,
+    equipment_id INTEGER,
+    FOREIGN KEY (exercise_id) REFERENCES exercises (id),
+    FOREIGN KEY (equipment_id) REFERENCES equipments (id)
   );
 `;
 
-// Dados iniciais de grupos musculares
+// -- DADOS MOCKADOS --
+
 const muscleGroupsData = [
-    { name: 'Peitoral', slug: 'chest', icon: '🫁' },
-    { name: 'Costas', slug: 'back', icon: '🔙' },
-    { name: 'Ombros', slug: 'shoulders', icon: '💪' },
-    { name: 'Braços', slug: 'arms', icon: '💪' },
-    { name: 'Pernas', slug: 'legs', icon: '🦵' },
-    { name: 'Core', slug: 'core', icon: '🎯' },
+  { id: 1, name: 'Peitoral', slug: 'chest', icon: '🫁' },
+  { id: 2, name: 'Costas', slug: 'back', icon: '🔙' },
+  { id: 3, name: 'Ombros', slug: 'shoulders', icon: '💪' },
+  { id: 4, name: 'Braços', slug: 'arms', icon: '💪' },
+  { id: 5, name: 'Pernas', slug: 'legs', icon: '🦵' },
+  { id: 6, name: 'Core', slug: 'core', icon: '🎯' },
 ];
 
-// Dados iniciais de exercícios
+const subMusclesData = [
+  // Peito
+  { id: 1, groupId: 1, name: 'Peitoral Maior', description: 'Parte principal do peito' },
+  { id: 2, groupId: 1, name: 'Peitoral Superior', description: 'Parte alta, clavicular' },
+  { id: 3, groupId: 1, name: 'Peitoral Inferior', description: 'Parte baixa' },
+  // Costas
+  { id: 4, groupId: 2, name: 'Grande Dorsal', description: 'As "asas" das costas' },
+  { id: 5, groupId: 2, name: 'Trapézio', description: 'Parte superior das costas' },
+  // Ombros
+  { id: 6, groupId: 3, name: 'Deltoide Anterior', description: 'Frente do ombro' },
+  { id: 7, groupId: 3, name: 'Deltoide Lateral', description: 'Lado do ombro' },
+  // Braços
+  { id: 8, groupId: 4, name: 'Bíceps', description: 'Frente do braço' },
+  { id: 9, groupId: 4, name: 'Tríceps', description: 'Fundo do braço' },
+];
+
+const equipmentsData = [
+  { id: 1, name: 'Barra', icon: '🏋️' },
+  { id: 2, name: 'Halteres', icon: 'dumbbell' },
+  { id: 3, name: 'Peso do Corpo', icon: 'human' },
+  { id: 4, name: 'Polia', icon: 'cable' },
+  { id: 5, name: 'Máquina', icon: 'machine' },
+];
+
 const exercisesData = [
-    // Peitoral (id: 1)
-    { name: 'Supino Reto', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra na largura dos ombros", "Desça até o peito", "Empurre para cima"]' },
-    { name: 'Supino Inclinado', muscleGroupId: 1, instructions: '["Ajuste o banco para 30-45°", "Segure a barra", "Desça controladamente", "Empurre para cima"]' },
-    { name: 'Flexão de Braço', muscleGroupId: 1, instructions: '["Mãos na largura dos ombros", "Corpo reto", "Desça até o chão", "Empurre para cima"]' },
-    { name: 'Crucifixo', muscleGroupId: 1, instructions: '["Deite no banco com halteres", "Braços abertos", "Feche em arco", "Controle a descida"]' },
+  // Peitoral (id: 1)
+  { id: 1, name: 'Supino Reto', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra", "Desça até o peito", "Empurre"]' },
+  { id: 2, name: 'Flexão de Braço', muscleGroupId: 1, instructions: '["Mãos no chão", "Corpo reto", "Desça até o chão", "Empurre"]' },
+  { id: 3, name: 'Supino Inclinado (Halteres)', muscleGroupId: 1, instructions: '["Banco 45 graus", "Empurre halteres para cima"]' },
 
-    // Costas (id: 2)
-    { name: 'Puxada Alta', muscleGroupId: 2, instructions: '["Segure a barra larga", "Puxe até o peito", "Contraia as costas", "Volte controlado"]' },
-    { name: 'Remada Curvada', muscleGroupId: 2, instructions: '["Incline o tronco", "Puxe a barra para o abdômen", "Contraia as escápulas", "Desça controlado"]' },
-    { name: 'Remada Unilateral', muscleGroupId: 2, instructions: '["Apoie um joelho no banco", "Puxe o halter para a cintura", "Mantenha o cotovelo próximo", "Desça controlado"]' },
+  // Costas (id: 2)
+  { id: 4, name: 'Barra Fixa', muscleGroupId: 2, instructions: '["Pendure-se", "Puxe o corpo até o queixo passar da barra"]' },
 
-    // Ombros (id: 3)
-    { name: 'Desenvolvimento', muscleGroupId: 3, instructions: '["Segure halteres na altura dos ombros", "Empurre para cima", "Desça controlado", "Não trave os cotovelos"]' },
-    { name: 'Elevação Lateral', muscleGroupId: 3, instructions: '["Halteres ao lado do corpo", "Eleve até a linha dos ombros", "Mantenha cotovelos levemente flexionados", "Desça controlado"]' },
-    { name: 'Elevação Frontal', muscleGroupId: 3, instructions: '["Halteres à frente das coxas", "Eleve até a altura dos olhos", "Mantenha os braços retos", "Desça controlado"]' },
+  // Braços (id: 4)
+  { id: 5, name: 'Rosca Direta', muscleGroupId: 4, instructions: '["Segure a barra", "Flexione o cotovelo"]' },
+];
 
-    // Braços (id: 4)
-    { name: 'Rosca Direta', muscleGroupId: 4, instructions: '["Barra na largura dos ombros", "Curl para cima", "Cotovelos fixos", "Desça controlado"]' },
-    { name: 'Tríceps Corda', muscleGroupId: 4, instructions: '["Segure a corda", "Estenda os braços para baixo", "Abra no final", "Volte controlado"]' },
-    { name: 'Rosca Martelo', muscleGroupId: 4, instructions: '["Halteres com pegada neutra", "Curl para cima", "Cotovelos fixos", "Desça controlado"]' },
+// Pivot: Exercício <-> Equipamento
+const exerciseEquipmentsData = [
+  { exerciseId: 1, equipmentId: 1 }, // Supino Reto -> Barra
+  { exerciseId: 2, equipmentId: 3 }, // Flexão -> Peso Corpo
+  { exerciseId: 3, equipmentId: 2 }, // Supino Inclinado -> Halteres
+  { exerciseId: 4, equipmentId: 3 }, // Barra Fixa -> Peso Corpo
+  { exerciseId: 5, equipmentId: 1 }, // Rosca Direta -> Barra
+];
 
-    // Pernas (id: 5)
-    { name: 'Agachamento Livre', muscleGroupId: 5, instructions: '["Barra nos trapézios", "Desça até paralelo", "Joelhos alinhados", "Suba explosivo"]' },
-    { name: 'Leg Press', muscleGroupId: 5, instructions: '["Pés na plataforma", "Desça controlado", "Não trave os joelhos", "Empurre para cima"]' },
-    { name: 'Stiff', muscleGroupId: 5, instructions: '["Barra à frente das coxas", "Desça mantendo as pernas retas", "Sinta o alongamento", "Suba contraindo glúteos"]' },
+// Pivot: Exercício <-> SubMúsculos
+const exerciseTargetsData = [
+  { exerciseId: 1, subMuscleId: 1, targetType: 'primary' }, // Supino Reto -> Peitoral Maior
+  { exerciseId: 1, subMuscleId: 6, targetType: 'secondary' }, // Supino Reto -> Deltoide Ant
+  { exerciseId: 1, subMuscleId: 9, targetType: 'secondary' }, // Supino Reto -> Tríceps
 
-    // Core (id: 6)
-    { name: 'Prancha', muscleGroupId: 6, instructions: '["Apoie antebraços e pés", "Corpo reto", "Contraia o abdômen", "Mantenha 30-60s"]' },
-    { name: 'Abdominal Crunch', muscleGroupId: 6, instructions: '["Deite com joelhos flexionados", "Mãos atrás da cabeça", "Eleve os ombros", "Contraia o abdômen"]' },
-    { name: 'Russian Twist', muscleGroupId: 6, instructions: '["Sente inclinado para trás", "Pés elevados ou no chão", "Gire o tronco lado a lado", "Segure peso opcional"]' },
+  { exerciseId: 2, subMuscleId: 1, targetType: 'primary' }, // Flexão -> Peitoral Maior
+
+  { exerciseId: 3, subMuscleId: 2, targetType: 'primary' }, // Supino Inc -> Peitoral Superior
+
+  { exerciseId: 4, subMuscleId: 4, targetType: 'primary' }, // Barra Fixa -> Dorsal
+  { exerciseId: 5, subMuscleId: 8, targetType: 'primary' }, // Rosca Direta -> Bíceps
 ];
 
 export async function seedDatabase() {
-    const expoDb = openDatabaseSync('gymguide.db');
+  const expoDb = openDatabaseSync('gymguide.db');
 
-    try {
-        // 1. Criar Tabelas
-        await expoDb.execAsync(createTablesSql);
+  try {
+    console.log('⏳ Iniciando Seed...');
 
-        // 2. Limpar dados antigos
-        await db.delete(exercises);
-        await db.delete(muscleGroups);
-        console.log('🧹 Banco limpo!');
+    // 1. Criar Tabelas
+    await expoDb.execAsync(createTablesSql);
 
-        // 3. Inserir Grupos Musculares
-        for (const group of muscleGroupsData) {
-            await db.insert(muscleGroups).values(group);
-        }
-        console.log('✅ Grupos musculares inseridos!');
+    // 2. Limpar tudo (ordem importa por causa das FKs)
+    await db.delete(exerciseTargets);
+    await db.delete(exerciseEquipments);
+    await db.delete(exercises);
+    await db.delete(subMuscles);
+    await db.delete(equipments);
+    await db.delete(muscleGroups);
+    console.log('🧹 Banco limpo!');
 
-        // 4. Inserir Exercícios
-        for (const exercise of exercisesData) {
-            await db.insert(exercises).values(exercise);
-        }
-        console.log('✅ Exercícios inseridos!');
+    // 3. Inserir Dados Base
+    await db.insert(muscleGroups).values(muscleGroupsData);
+    await db.insert(subMuscles).values(subMusclesData);
+    await db.insert(equipments).values(equipmentsData);
+    console.log('✅ Dados base inseridos!');
 
-        console.log('🌱 Seed realizado com sucesso!');
-        return true;
-    } catch (error) {
-        console.error('❌ Erro no seed:', error);
-        return false;
-    }
+    // 4. Inserir Exercícios
+    await db.insert(exercises).values(exercisesData);
+    console.log('✅ Exercícios inseridos!');
+
+    // 5. Inserir Relações
+    await db.insert(exerciseEquipments).values(exerciseEquipmentsData);
+    await db.insert(exerciseTargets).values(exerciseTargetsData);
+    console.log('✅ Relações inseridas!');
+
+    console.log('🌱 Seed concluído com sucesso!');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro no seed:', error);
+    return false;
+  }
 }

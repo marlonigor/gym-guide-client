@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
 
 // ======================================
 // TABELAS PRINCIPAIS
@@ -13,6 +14,11 @@ export const muscleGroups = sqliteTable('muscle_groups', {
     icon: text('icon'), // Emoji ou nome de ícone
 });
 
+export const muscleGroupsRelations = relations(muscleGroups, ({ many }) => ({
+    subMuscles: many(subMuscles),
+    exercises: many(exercises),
+}));
+
 // Submúsculos (Peitoral Superior, Grande Dorsal, etc.)
 export const subMuscles = sqliteTable('sub_muscles', {
     id: integer('id').primaryKey({ autoIncrement: true }),
@@ -21,12 +27,24 @@ export const subMuscles = sqliteTable('sub_muscles', {
     description: text('description'),
 });
 
+export const subMusclesRelations = relations(subMuscles, ({ one, many }) => ({
+    group: one(muscleGroups, {
+        fields: [subMuscles.groupId],
+        references: [muscleGroups.id],
+    }),
+    exerciseTargets: many(exerciseTargets),
+}));
+
 // Equipamentos (Halteres, Barra, Máquina, etc.)
 export const equipments = sqliteTable('equipments', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
     icon: text('icon'),
 });
+
+export const equipmentsRelations = relations(equipments, ({ many }) => ({
+    exerciseEquipments: many(exerciseEquipments),
+}));
 
 // Exercícios
 export const exercises = sqliteTable('exercises', {
@@ -37,8 +55,17 @@ export const exercises = sqliteTable('exercises', {
     muscleGroupId: integer('muscle_group_id').references(() => muscleGroups.id),
 });
 
+export const exercisesRelations = relations(exercises, ({ one, many }) => ({
+    muscleGroup: one(muscleGroups, {
+        fields: [exercises.muscleGroupId],
+        references: [muscleGroups.id],
+    }),
+    targets: many(exerciseTargets),
+    equipments: many(exerciseEquipments),
+}));
+
 // ======================================
-// TABELAS PIVOT (N:N) - Para V2
+// TABELAS PIVOT (N:N)
 // ======================================
 
 // Exercício <-> Submúsculo (target_type: primary, secondary, stabilizer)
@@ -48,8 +75,30 @@ export const exerciseTargets = sqliteTable('exercise_targets', {
     targetType: text('target_type').default('primary'),
 });
 
+export const exerciseTargetsRelations = relations(exerciseTargets, ({ one }) => ({
+    exercise: one(exercises, {
+        fields: [exerciseTargets.exerciseId],
+        references: [exercises.id],
+    }),
+    subMuscle: one(subMuscles, {
+        fields: [exerciseTargets.subMuscleId],
+        references: [subMuscles.id],
+    }),
+}));
+
 // Exercício <-> Equipamento
 export const exerciseEquipments = sqliteTable('exercise_equipments', {
     exerciseId: integer('exercise_id').references(() => exercises.id),
     equipmentId: integer('equipment_id').references(() => equipments.id),
 });
+
+export const exerciseEquipmentsRelations = relations(exerciseEquipments, ({ one }) => ({
+    exercise: one(exercises, {
+        fields: [exerciseEquipments.exerciseId],
+        references: [exercises.id],
+    }),
+    equipment: one(equipments, {
+        fields: [exerciseEquipments.equipmentId],
+        references: [equipments.id],
+    }),
+}));
