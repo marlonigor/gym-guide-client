@@ -9,9 +9,9 @@ export default function SetupScreen({ onComplete }) {
 
     const handleSeed = async () => {
         setLoading(true);
-        const success = await seedDatabase();
+        const result = await seedDatabase();
 
-        if (success) {
+        if (result.success) {
             try {
                 await AsyncStorage.setItem('app_setup_completed', 'true');
                 setLoading(false);
@@ -26,7 +26,7 @@ export default function SetupScreen({ onComplete }) {
             }
         } else {
             setLoading(false);
-            Alert.alert('Erro', 'Falha ao popular o banco.');
+            Alert.alert('Erro', `Falha ao popular o banco:\n${result.error?.message || JSON.stringify(result.error)}`);
         }
     };
 

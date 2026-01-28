@@ -12,6 +12,7 @@ import SetupScreen from './src/features/setup/screens/SetupScreen';
 
 // Theme
 import { colors } from './src/theme';
+import { SetupContext } from './src/contexts/SetupContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,19 @@ export default function App() {
     }
   };
 
+  const contextValue = {
+    isReady,
+    setSetupCompleted: (value) => setIsReady(value),
+    resetSetup: async () => {
+      try {
+        await AsyncStorage.removeItem('app_setup_completed');
+        setIsReady(false);
+      } catch (e) {
+        console.error('Erro ao resetar setup:', e);
+      }
+    }
+  };
+
   if (checking) {
     return (
       <View style={styles.loadingContainer}>
@@ -44,24 +58,26 @@ export default function App() {
     );
   }
 
-  if (!isReady) {
-    return <SetupScreen onComplete={() => setIsReady(true)} />;
-  }
-
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Exercises" component={ExercisesScreen} />
-        <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SetupContext.Provider value={contextValue}>
+      {!isReady ? (
+        <SetupScreen onComplete={() => setIsReady(true)} />
+      ) : (
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Exercises" component={ExercisesScreen} />
+            <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      )}
+    </SetupContext.Provider>
   );
 }
 

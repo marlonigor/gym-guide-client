@@ -1,9 +1,16 @@
-import { db } from './db';
+import { db, expoDb } from './db';
 import { exercises, muscleGroups, equipments, subMuscles, exerciseTargets, exerciseEquipments } from './schema';
-import { openDatabaseSync } from 'expo-sqlite';
 
 // SQL para criar tabelas (Alinhado com schema.js)
+
 const createTablesSql = `
+  DROP TABLE IF EXISTS exercise_equipments;
+  DROP TABLE IF EXISTS exercise_targets;
+  DROP TABLE IF EXISTS exercises;
+  DROP TABLE IF EXISTS sub_muscles;
+  DROP TABLE IF EXISTS equipments;
+  DROP TABLE IF EXISTS muscle_groups;
+
   CREATE TABLE IF NOT EXISTS muscle_groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -123,22 +130,20 @@ const exerciseTargetsData = [
 ];
 
 export async function seedDatabase() {
-  const expoDb = openDatabaseSync('gymguide.db');
-
   try {
     console.log('⏳ Iniciando Seed...');
 
     // 1. Criar Tabelas
     await expoDb.execAsync(createTablesSql);
 
-    // 2. Limpar tudo (ordem importa por causa das FKs)
-    await db.delete(exerciseTargets);
-    await db.delete(exerciseEquipments);
-    await db.delete(exercises);
-    await db.delete(subMuscles);
-    await db.delete(equipments);
-    await db.delete(muscleGroups);
-    console.log('🧹 Banco limpo!');
+    // 2. Limpar tudo (Agora feito via DROP TABLES no passo 1)
+    // await db.delete(exerciseTargets);
+    // await db.delete(exerciseEquipments);
+    // await db.delete(exercises);
+    // await db.delete(subMuscles);
+    // await db.delete(equipments);
+    // await db.delete(muscleGroups);
+    console.log('🧹 Tabelas recriadas!');
 
     // 3. Inserir Dados Base
     await db.insert(muscleGroups).values(muscleGroupsData);
@@ -156,9 +161,9 @@ export async function seedDatabase() {
     console.log('✅ Relações inseridas!');
 
     console.log('🌱 Seed concluído com sucesso!');
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('❌ Erro no seed:', error);
-    return false;
+    return { success: false, error };
   }
 }

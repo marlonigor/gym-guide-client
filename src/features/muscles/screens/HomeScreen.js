@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, StatusBar, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../../../database/db';
 import { muscleGroups } from '../../../database/schema';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
+import { useSetup } from '../../../contexts/SetupContext';
 
 export default function HomeScreen({ navigation }) {
+    const { resetSetup } = useSetup();
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -62,6 +65,13 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.emptyState}>
                     <Text style={styles.emptyText}>Nenhum dado encontrado.</Text>
                     <Text style={styles.emptyHint}>Rode o seed para popular o banco.</Text>
+
+                    <TouchableOpacity
+                        style={styles.resetButton}
+                        onPress={resetSetup}
+                    >
+                        <Text style={styles.resetButtonText}>Resetar e Tentar Setup</Text>
+                    </TouchableOpacity>
                 </View>
             ) : (
                 <FlatList
@@ -142,5 +152,16 @@ const styles = StyleSheet.create({
     emptyHint: {
         ...typography.caption,
         color: colors.textSecondary,
+        marginBottom: spacing.lg,
+    },
+    resetButton: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: borderRadius.md,
+    },
+    resetButtonText: {
+        color: colors.text,
+        ...typography.button,
     },
 });
