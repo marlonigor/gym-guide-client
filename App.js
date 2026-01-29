@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Screens
 import HomeScreen from './src/features/muscles/screens/HomeScreen';
+import SubMusclesScreen from './src/features/muscles/screens/SubMusclesScreen';
 import ExercisesScreen from './src/features/exercises/screens/ExercisesScreen';
 import ExerciseDetailScreen from './src/features/exercises/screens/ExerciseDetailScreen';
 import SetupScreen from './src/features/setup/screens/SetupScreen';
@@ -72,6 +73,7 @@ export default function App() {
             }}
           >
             <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="SubMuscles" component={SubMusclesScreen} />
             <Stack.Screen name="Exercises" component={ExercisesScreen} />
             <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
           </Stack.Navigator>

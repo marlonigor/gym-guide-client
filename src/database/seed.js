@@ -2,7 +2,6 @@ import { db, expoDb } from './db';
 import { exercises, muscleGroups, equipments, subMuscles, exerciseTargets, exerciseEquipments } from './schema';
 
 // SQL para criar tabelas (Alinhado com schema.js)
-
 const createTablesSql = `
   DROP TABLE IF EXISTS exercise_equipments;
   DROP TABLE IF EXISTS exercise_targets;
@@ -64,25 +63,57 @@ const muscleGroupsData = [
   { id: 1, name: 'Peitoral', slug: 'chest', icon: '🫁' },
   { id: 2, name: 'Costas', slug: 'back', icon: '🔙' },
   { id: 3, name: 'Ombros', slug: 'shoulders', icon: '💪' },
-  { id: 4, name: 'Braços', slug: 'arms', icon: '💪' },
-  { id: 5, name: 'Pernas', slug: 'legs', icon: '🦵' },
-  { id: 6, name: 'Core', slug: 'core', icon: '🎯' },
+  { id: 4, name: 'Bíceps', slug: 'biceps', icon: '💪' },
+  { id: 5, name: 'Tríceps', slug: 'triceps', icon: '💪' },
+  { id: 6, name: 'Pernas', slug: 'legs', icon: '🦵' },
+  { id: 7, name: 'Core', slug: 'core', icon: '🎯' },
+  { id: 8, name: 'Outros', slug: 'others', icon: '➕' },
 ];
 
 const subMusclesData = [
-  // Peito
-  { id: 1, groupId: 1, name: 'Peitoral Maior', description: 'Parte principal do peito' },
-  { id: 2, groupId: 1, name: 'Peitoral Superior', description: 'Parte alta, clavicular' },
-  { id: 3, groupId: 1, name: 'Peitoral Inferior', description: 'Parte baixa' },
-  // Costas
-  { id: 4, groupId: 2, name: 'Grande Dorsal', description: 'As "asas" das costas' },
-  { id: 5, groupId: 2, name: 'Trapézio', description: 'Parte superior das costas' },
-  // Ombros
-  { id: 6, groupId: 3, name: 'Deltoide Anterior', description: 'Frente do ombro' },
-  { id: 7, groupId: 3, name: 'Deltoide Lateral', description: 'Lado do ombro' },
-  // Braços
-  { id: 8, groupId: 4, name: 'Bíceps', description: 'Frente do braço' },
-  { id: 9, groupId: 4, name: 'Tríceps', description: 'Fundo do braço' },
+  // 1. Peitoral
+  { id: 101, groupId: 1, name: 'Peitoral Superior', description: '' },
+  { id: 102, groupId: 1, name: 'Peitoral Médio', description: '' },
+  { id: 103, groupId: 1, name: 'Peitoral Inferior', description: '' },
+
+  // 2. Costas
+  { id: 201, groupId: 2, name: 'Dorsal', description: '' },
+  { id: 202, groupId: 2, name: 'Meio das costas', description: '' },
+  { id: 203, groupId: 2, name: 'Lombar', description: '' },
+
+  // 3. Ombros
+  { id: 301, groupId: 3, name: 'Ombro Frontal', description: '' },
+  { id: 302, groupId: 3, name: 'Ombro Lateral', description: '' },
+  { id: 303, groupId: 3, name: 'Ombro Posterior', description: '' },
+
+  // 4. Bíceps
+  { id: 401, groupId: 4, name: 'Bíceps Cabeça Longa', description: '' },
+  { id: 402, groupId: 4, name: 'Bíceps Cabeça Curta', description: '' },
+  { id: 403, groupId: 4, name: 'Braquial', description: '' },
+
+  // 5. Tríceps
+  { id: 501, groupId: 5, name: 'Tríceps Cabeça Longa', description: '' },
+  { id: 502, groupId: 5, name: 'Tríceps Cabeça Lateral', description: '' },
+  { id: 503, groupId: 5, name: 'Tríceps Cabeça Medial', description: '' },
+
+  // 6. Pernas
+  { id: 601, groupId: 6, name: 'Quadríceps', description: '' },
+  { id: 602, groupId: 6, name: 'Posterior de Coxa', description: '' },
+  { id: 603, groupId: 6, name: 'Glúteos', description: '' },
+  { id: 604, groupId: 6, name: 'Panturrilhas', description: '' },
+
+  // 7. Core
+  { id: 701, groupId: 7, name: 'Abdômen Superior', description: '' },
+  { id: 702, groupId: 7, name: 'Abdômen Inferior', description: '' },
+  { id: 703, groupId: 7, name: 'Oblíquos', description: '' },
+  { id: 704, groupId: 7, name: 'Lombar', description: '' },
+
+  // 8. Outros
+  { id: 801, groupId: 8, name: 'Trapézio', description: '' },
+  { id: 802, groupId: 8, name: 'Antebraço', description: '' },
+  { id: 803, groupId: 8, name: 'Adutores', description: '' },
+  { id: 804, groupId: 8, name: 'Abdutores', description: '' },
+  { id: 805, groupId: 8, name: 'Pescoço', description: '' },
 ];
 
 const equipmentsData = [
@@ -94,39 +125,111 @@ const equipmentsData = [
 ];
 
 const exercisesData = [
-  // Peitoral (id: 1)
-  { id: 1, name: 'Supino Reto', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra", "Desça até o peito", "Empurre"]' },
-  { id: 2, name: 'Flexão de Braço', muscleGroupId: 1, instructions: '["Mãos no chão", "Corpo reto", "Desça até o chão", "Empurre"]' },
-  { id: 3, name: 'Supino Inclinado (Halteres)', muscleGroupId: 1, instructions: '["Banco 45 graus", "Empurre halteres para cima"]' },
+  // Peitoral
+  { id: 1, name: 'Supino Inclinado (Halteres)', muscleGroupId: 1, instructions: '["Banco 45 graus", "Empurre halteres para cima"]' },
+  { id: 2, name: 'Supino Reto (Barra)', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra", "Desça até o peito", "Empurre"]' },
+  { id: 3, name: 'Crossover (Polia)', muscleGroupId: 1, instructions: '["Puxe as polias para baixo", "Contraia o peito"]' },
+  { id: 4, name: 'Supino Inclinado (Máquina)', muscleGroupId: 1, instructions: '["Ajuste o assento", "Empurre a máquina"]' }, // NEW: Alternative for 101
+  { id: 5, name: 'Flexão Declinada', muscleGroupId: 1, instructions: '["Pés elevados", "Mãos no chão", "Flexione"]' }, // NEW: Bodyweight Alternative for 101/102
 
-  // Costas (id: 2)
-  { id: 4, name: 'Barra Fixa', muscleGroupId: 2, instructions: '["Pendure-se", "Puxe o corpo até o queixo passar da barra"]' },
+  // Costas
+  { id: 6, name: 'Puxada Alta (Barra Fixa)', muscleGroupId: 2, instructions: '["Pendure-se", "Puxe o corpo até o queixo passar da barra"]' },
+  { id: 7, name: 'Remada Curvada', muscleGroupId: 2, instructions: '["Incline o tronco", "Puxe a barra até o umbigo"]' },
+  { id: 8, name: 'Puxada Frente (Polia)', muscleGroupId: 2, instructions: '["Puxe a barra até o peito"]' }, // NEW: Alternative for 201
 
-  // Braços (id: 4)
-  { id: 5, name: 'Rosca Direta', muscleGroupId: 4, instructions: '["Segure a barra", "Flexione o cotovelo"]' },
+  // Ombros
+  { id: 9, name: 'Elevação Lateral', muscleGroupId: 3, instructions: '["Eleve os braços lateralmente"]' },
+  { id: 10, name: 'Desenvolvimento (Halteres)', muscleGroupId: 3, instructions: '["Empurre os halteres para cima"]' }, // NEW for 301
+
+  // Bíceps
+  { id: 11, name: 'Rosca Direta (Barra)', muscleGroupId: 4, instructions: '["Segure a barra", "Flexione os cotovelos"]' },
+  { id: 12, name: 'Rosca Martelo', muscleGroupId: 4, instructions: '["Pegada neutra", "Flexione"]' }, // NEW for 403
+
+  // Tríceps
+  { id: 13, name: 'Tríceps Corda', muscleGroupId: 5, instructions: '["Estenda o cotovelo"]' },
+  { id: 14, name: 'Tríceps Testa', muscleGroupId: 5, instructions: '["Deitado", "Flexione cotovelos até a testa"]' }, // NEW for 501
+
+  // Pernas
+  { id: 15, name: 'Agachamento Livre', muscleGroupId: 6, instructions: '["Desça o quadril", "Mantenha postura"]' },
+  { id: 16, name: 'Leg Press 45', muscleGroupId: 6, instructions: '["Empurre a plataforma"]' }, // NEW for 601
+  { id: 17, name: 'Cadeira Extensora', muscleGroupId: 6, instructions: '["Estenda os joelhos"]' }, // NEW for 601
+
+  // Outros (Trapézio, Antebraço)
+  { id: 18, name: 'Encolhimento (Halteres)', muscleGroupId: 8, instructions: '["Eleve os ombros"]' }, // NEW for 801
+  { id: 19, name: 'Rosca Punho', muscleGroupId: 8, instructions: '["Apoie o braço", "Flexione o punho"]' }, // NEW for 802
 ];
 
 // Pivot: Exercício <-> Equipamento
 const exerciseEquipmentsData = [
-  { exerciseId: 1, equipmentId: 1 }, // Supino Reto -> Barra
-  { exerciseId: 2, equipmentId: 3 }, // Flexão -> Peso Corpo
-  { exerciseId: 3, equipmentId: 2 }, // Supino Inclinado -> Halteres
-  { exerciseId: 4, equipmentId: 3 }, // Barra Fixa -> Peso Corpo
-  { exerciseId: 5, equipmentId: 1 }, // Rosca Direta -> Barra
+  { exerciseId: 1, equipmentId: 2 },
+  { exerciseId: 2, equipmentId: 1 },
+  { exerciseId: 3, equipmentId: 4 },
+  { exerciseId: 4, equipmentId: 5 }, // Maquina
+  { exerciseId: 5, equipmentId: 3 }, // Peso corpo
+
+  { exerciseId: 6, equipmentId: 3 }, // Barra fixa = Peso corpo
+  { exerciseId: 7, equipmentId: 1 },
+  { exerciseId: 8, equipmentId: 4 },
+
+  { exerciseId: 9, equipmentId: 2 },
+  { exerciseId: 10, equipmentId: 2 },
+
+  { exerciseId: 11, equipmentId: 1 },
+  { exerciseId: 12, equipmentId: 2 },
+
+  { exerciseId: 13, equipmentId: 4 },
+  { exerciseId: 14, equipmentId: 1 },
+
+  { exerciseId: 15, equipmentId: 1 },
+  { exerciseId: 16, equipmentId: 5 },
+  { exerciseId: 17, equipmentId: 5 },
+
+  { exerciseId: 18, equipmentId: 2 },
+  { exerciseId: 19, equipmentId: 1 },
 ];
 
 // Pivot: Exercício <-> SubMúsculos
 const exerciseTargetsData = [
-  { exerciseId: 1, subMuscleId: 1, targetType: 'primary' }, // Supino Reto -> Peitoral Maior
-  { exerciseId: 1, subMuscleId: 6, targetType: 'secondary' }, // Supino Reto -> Deltoide Ant
-  { exerciseId: 1, subMuscleId: 9, targetType: 'secondary' }, // Supino Reto -> Tríceps
+  // Peitoral Superior (101)
+  { exerciseId: 1, subMuscleId: 101, targetType: 'primary' }, // Supino Inc Halteres
+  { exerciseId: 4, subMuscleId: 101, targetType: 'primary' }, // Supino Inc Maquina
+  { exerciseId: 5, subMuscleId: 101, targetType: 'primary' }, // Flexão Declinada (Targeting upper chest mostly)
 
-  { exerciseId: 2, subMuscleId: 1, targetType: 'primary' }, // Flexão -> Peitoral Maior
+  // Peitoral Médio (102)
+  { exerciseId: 2, subMuscleId: 102, targetType: 'primary' }, // Supino Reto
 
-  { exerciseId: 3, subMuscleId: 2, targetType: 'primary' }, // Supino Inc -> Peitoral Superior
+  // Peitoral Inferior (103)
+  { exerciseId: 3, subMuscleId: 103, targetType: 'primary' }, // Crossover
 
-  { exerciseId: 4, subMuscleId: 4, targetType: 'primary' }, // Barra Fixa -> Dorsal
-  { exerciseId: 5, subMuscleId: 8, targetType: 'primary' }, // Rosca Direta -> Bíceps
+  // Dorsal (201)
+  { exerciseId: 6, subMuscleId: 201, targetType: 'primary' }, // Barra Fixa
+  { exerciseId: 8, subMuscleId: 201, targetType: 'primary' }, // Puxada Polia
+
+  // Meio Costas (202)
+  { exerciseId: 7, subMuscleId: 202, targetType: 'primary' }, // Remada Curvada
+
+  // Ombro Frontal (301)
+  { exerciseId: 10, subMuscleId: 301, targetType: 'primary' }, // Desenv.
+
+  // Ombro Lateral (302)
+  { exerciseId: 9, subMuscleId: 302, targetType: 'primary' }, // Elev. Lateral
+
+  // Bíceps (401 - Longa, 403 - Braquial)
+  { exerciseId: 11, subMuscleId: 401, targetType: 'primary' }, // Rosca Direta
+  { exerciseId: 12, subMuscleId: 403, targetType: 'primary' }, // Rosca Martelo
+
+  // Tríceps
+  { exerciseId: 13, subMuscleId: 502, targetType: 'primary' }, // Corda -> Lateral
+  { exerciseId: 14, subMuscleId: 501, targetType: 'primary' }, // Testa -> Longa
+
+  // Quadríceps (601)
+  { exerciseId: 15, subMuscleId: 601, targetType: 'primary' }, // Agachamento
+  { exerciseId: 16, subMuscleId: 601, targetType: 'primary' }, // Leg Press
+  { exerciseId: 17, subMuscleId: 601, targetType: 'primary' }, // Extensora
+
+  // Outros
+  { exerciseId: 18, subMuscleId: 801, targetType: 'primary' }, // Trapézio
+  { exerciseId: 19, subMuscleId: 802, targetType: 'primary' }, // Antebraço
 ];
 
 export async function seedDatabase() {
@@ -136,13 +239,6 @@ export async function seedDatabase() {
     // 1. Criar Tabelas
     await expoDb.execAsync(createTablesSql);
 
-    // 2. Limpar tudo (Agora feito via DROP TABLES no passo 1)
-    // await db.delete(exerciseTargets);
-    // await db.delete(exerciseEquipments);
-    // await db.delete(exercises);
-    // await db.delete(subMuscles);
-    // await db.delete(equipments);
-    // await db.delete(muscleGroups);
     console.log('🧹 Tabelas recriadas!');
 
     // 3. Inserir Dados Base

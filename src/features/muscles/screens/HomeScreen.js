@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }) {
     };
 
     const handleGroupPress = (group) => {
-        navigation.navigate('Exercises', {
+        navigation.navigate('SubMuscles', {
             muscleGroupId: group.id,
             muscleGroupName: group.name
         });
@@ -57,7 +57,12 @@ export default function HomeScreen({ navigation }) {
             <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
             <View style={styles.header}>
-                <Text style={styles.title}>GymGuide</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={styles.title}>GymGuide</Text>
+                    <TouchableOpacity onPress={resetSetup}>
+                        <Text style={{ color: colors.error, fontSize: 12 }}>Reset Data</Text>
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.subtitle}>Escolha o grupo muscular</Text>
             </View>
 

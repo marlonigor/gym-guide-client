@@ -1,57 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { getExercisesByMuscleGroup, getExercisesBySubMuscle } from '../../../services/exercises.service';
+import { getSubMusclesByGroup } from '../../../services/exercises.service';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
 
-export default function ExercisesScreen({ route, navigation }) {
-    const { muscleGroupId, muscleGroupName, subMuscleId, subMuscleName } = route.params;
-    const [exerciseList, setExerciseList] = useState([]);
+export default function SubMusclesScreen({ route, navigation }) {
+    const { muscleGroupId, muscleGroupName } = route.params;
+    const [subMuscles, setSubMuscles] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadExercises();
-    }, [subMuscleId, muscleGroupId]);
+        loadSubMuscles();
+    }, [muscleGroupId]);
 
-    const loadExercises = async () => {
+    const loadSubMuscles = async () => {
         try {
-            let data = [];
-            if (subMuscleId) {
-                data = await getExercisesBySubMuscle(subMuscleId);
-            } else if (muscleGroupId) {
-                data = await getExercisesByMuscleGroup(muscleGroupId);
-            }
-            setExerciseList(data);
+            setLoading(true);
+            const data = await getSubMusclesByGroup(muscleGroupId);
+            setSubMuscles(data);
         } catch (error) {
-            console.log('Erro ao carregar exercícios:', error);
+            console.error('Erro ao carregar sub-músculos:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleExercisePress = (exercise) => {
-        navigation.navigate('ExerciseDetail', { exercise });
+    const handleSubGroupPress = (subMuscle) => {
+        navigation.navigate('Exercises', {
+            subMuscleId: subMuscle.id,
+            subMuscleName: subMuscle.name
+        });
     };
 
     const renderCard = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
-            onPress={() => handleExercisePress(item)}
+            onPress={() => handleSubGroupPress(item)}
             activeOpacity={0.7}
         >
-            <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardArrow}>→</Text>
-            </View>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            {item.description ? (
+                <Text style={styles.cardDesc}>{item.description}</Text>
+            ) : null}
         </TouchableOpacity>
     );
-
-    if (loading) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.loadingText}>Carregando...</Text>
-            </View>
-        );
-    }
 
     return (
         <View style={styles.container}>
@@ -59,17 +50,19 @@ export default function ExercisesScreen({ route, navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Text style={styles.backText}>← Voltar</Text>
                 </TouchableOpacity>
-                <Text style={styles.title}>{subMuscleName || muscleGroupName}</Text>
-                <Text style={styles.subtitle}>{exerciseList.length} exercícios</Text>
+                <Text style={styles.title}>{muscleGroupName}</Text>
+                <Text style={styles.subtitle}>Selecione a região específica</Text>
             </View>
 
-            {exerciseList.length === 0 ? (
+            {loading ? (
+                <Text style={styles.loadingText}>Carregando...</Text>
+            ) : subMuscles.length === 0 ? (
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyText}>Nenhum exercício encontrado.</Text>
+                    <Text style={styles.emptyText}>Nenhum sub-músculo encontrado.</Text>
                 </View>
             ) : (
                 <FlatList
-                    data={exerciseList}
+                    data={subMuscles}
                     keyExtractor={(item) => String(item.id)}
                     renderItem={renderCard}
                     contentContainerStyle={styles.list}
@@ -83,14 +76,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
-        paddingTop: 50,
     },
     header: {
         paddingHorizontal: spacing.lg,
-        marginBottom: spacing.lg,
+        paddingTop: 50,
+        paddingBottom: spacing.lg,
     },
     backButton: {
-        marginBottom: spacing.md,
+        marginBottom: spacing.sm,
     },
     backText: {
         ...typography.body,
@@ -99,41 +92,35 @@ const styles = StyleSheet.create({
     title: {
         ...typography.h1,
         color: colors.text,
-        marginBottom: spacing.xs,
     },
     subtitle: {
-        ...typography.caption,
+        ...typography.body,
         color: colors.textSecondary,
     },
     list: {
         paddingHorizontal: spacing.lg,
         paddingBottom: spacing.xl,
+        gap: spacing.md,
     },
     card: {
         backgroundColor: colors.surface,
-        borderRadius: borderRadius.md,
+        borderRadius: borderRadius.lg,
         padding: spacing.lg,
-        marginBottom: spacing.md,
-    },
-    cardContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
     },
     cardTitle: {
         ...typography.h3,
         color: colors.text,
-        flex: 1,
+        marginBottom: 2,
     },
-    cardArrow: {
-        ...typography.h2,
-        color: colors.primary,
+    cardDesc: {
+        ...typography.caption,
+        color: colors.textMuted,
     },
     loadingText: {
         ...typography.body,
         color: colors.textSecondary,
         textAlign: 'center',
-        marginTop: 100,
+        marginTop: 50,
     },
     emptyState: {
         flex: 1,
@@ -142,6 +129,6 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         ...typography.body,
-        color: colors.textSecondary,
+        color: colors.textMuted,
     },
 });

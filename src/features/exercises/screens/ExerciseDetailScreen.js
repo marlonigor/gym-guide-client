@@ -1,9 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
+import { getExerciseAlternatives } from '../../../services/exercises.service';
 
 export default function ExerciseDetailScreen({ route, navigation }) {
     const { exercise } = route.params;
+    const [alternatives, setAlternatives] = useState([]);
+    const [loadingAlternatives, setLoadingAlternatives] = useState(true);
 
     // Parse das instruções (vem como JSON string)
     let instructions = [];
@@ -12,6 +15,51 @@ export default function ExerciseDetailScreen({ route, navigation }) {
     } catch (e) {
         instructions = [];
     }
+
+    useEffect(() => {
+        loadAlternatives();
+    }, [exercise]);
+
+    const loadAlternatives = async () => {
+        try {
+            setLoadingAlternatives(true);
+            // Identificar o alvo primário
+            const primaryTarget = exercise.targets?.find(t => t.targetType === 'primary');
+
+            if (primaryTarget) {
+                const data = await getExerciseAlternatives(primaryTarget.subMuscleId, exercise.id);
+                setAlternatives(data);
+            } else {
+                setAlternatives([]);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar alternativas:', error);
+        } finally {
+            setLoadingAlternatives(false);
+        }
+    };
+
+    const renderAlternativeItem = (altExercise) => {
+        const isBodyweight = altExercise.equipments?.some(e => e.equipment?.id === 3);
+
+        return (
+            <TouchableOpacity
+                key={altExercise.id}
+                style={styles.altCard}
+                onPress={() => navigation.push('ExerciseDetail', { exercise: altExercise })}
+            >
+                <View style={styles.altContent}>
+                    <Text style={styles.altTitle}>{altExercise.name}</Text>
+                    {isBodyweight && (
+                        <View style={styles.badgeContainer}>
+                            <Text style={styles.badgeText}>Peso do Corpo</Text>
+                        </View>
+                    )}
+                </View>
+                <Text style={styles.arrow}>→</Text>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <ScrollView style={styles.container}>
@@ -58,6 +106,24 @@ export default function ExerciseDetailScreen({ route, navigation }) {
                         <Text style={styles.noInstructions}>Instruções não disponíveis.</Text>
                     )}
                 </View>
+
+                {/* Alternativas */}
+                <View style={[styles.instructionsContainer, { marginTop: spacing.lg }]}>
+                    <Text style={styles.sectionTitle}>
+                        Variações & Alternativas
+                    </Text>
+                    <Text style={styles.sectionSubtitle}>
+                        Para o mesmo grupo muscular
+                    </Text>
+
+                    {loadingAlternatives ? (
+                        <ActivityIndicator color={colors.primary} />
+                    ) : alternatives.length > 0 ? (
+                        alternatives.map(renderAlternativeItem)
+                    ) : (
+                        <Text style={styles.noInstructions}>Nenhuma alternativa encontrada.</Text>
+                    )}
+                </View>
             </View>
         </ScrollView>
     );
@@ -102,6 +168,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: spacing.lg,
+        paddingBottom: 50,
     },
     title: {
         ...typography.h1,
@@ -116,6 +183,11 @@ const styles = StyleSheet.create({
     sectionTitle: {
         ...typography.h3,
         color: colors.text,
+        marginBottom: spacing.xs,
+    },
+    sectionSubtitle: {
+        ...typography.caption,
+        color: colors.textMuted,
         marginBottom: spacing.lg,
     },
     instructionItem: {
@@ -147,5 +219,39 @@ const styles = StyleSheet.create({
         ...typography.body,
         color: colors.textMuted,
         fontStyle: 'italic',
+    },
+    altCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.surfaceLight,
+    },
+    altContent: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+    },
+    altTitle: {
+        ...typography.body,
+        color: colors.text,
+        marginRight: spacing.sm,
+    },
+    badgeContainer: {
+        backgroundColor: colors.surfaceLight,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.sm,
+    },
+    badgeText: {
+        ...typography.small,
+        color: colors.textMuted,
+    },
+    arrow: {
+        color: colors.primary,
+        fontSize: 18,
+        marginLeft: spacing.sm,
     },
 });
