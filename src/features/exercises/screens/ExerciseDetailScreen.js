@@ -64,7 +64,11 @@ export default function ExerciseDetailScreen({ route, navigation }) {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 30 }}
+                >
                     <Text style={styles.backText}>← Voltar</Text>
                 </TouchableOpacity>
             </View>

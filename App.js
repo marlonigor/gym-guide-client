@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { View, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,6 +16,15 @@ import { colors } from './src/theme';
 import { SetupContext } from './src/contexts/SetupContext';
 
 const Stack = createNativeStackNavigator();
+
+const NavigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.background,
+    card: colors.surface, // Ensure card (header/tab bar) is also dark
+  },
+};
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -61,24 +70,29 @@ export default function App() {
 
   return (
     <SetupContext.Provider value={contextValue}>
-      {!isReady ? (
-        <SetupScreen onComplete={() => setIsReady(true)} />
-      ) : (
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-              animation: 'slide_from_right',
-            }}
-          >
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="SubMuscles" component={SubMusclesScreen} />
-            <Stack.Screen name="Exercises" component={ExercisesScreen} />
-            <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      )}
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {!isReady ? (
+          <SetupScreen onComplete={() => setIsReady(true)} />
+        ) : (
+          <NavigationContainer theme={NavigationTheme}>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+                fullScreenGesture: true,
+              }}
+            >
+              <Stack.Screen name="Home" component={HomeScreen} />
+              <Stack.Screen name="SubMuscles" component={SubMusclesScreen} />
+              <Stack.Screen name="Exercises" component={ExercisesScreen} />
+              <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        )}
+      </View>
     </SetupContext.Provider>
   );
 }

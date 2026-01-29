@@ -47,7 +47,11 @@ export default function SubMusclesScreen({ route, navigation }) {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 30 }}
+                >
                     <Text style={styles.backText}>← Voltar</Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>{muscleGroupName}</Text>
