@@ -4,6 +4,7 @@ import { db } from '../../../database/db';
 import { exercises } from '../../../database/schema';
 import { eq } from 'drizzle-orm';
 import { fetchWgerExercises, fetchWgerExerciseDetail } from '../../../services/wger.service';
+import { downloadAndCacheMedia } from '../../../services/media.service';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
 
 export default function WgerSyncScreen({ navigation }) {
@@ -13,6 +14,8 @@ export default function WgerSyncScreen({ navigation }) {
     const [wgerResults, setWgerResults] = useState({}); // Agora mapeado por ID do exercício { [exId]: results[] }
     const [exerciseQueries, setExerciseQueries] = useState({}); // Busca por exercício
     const [isSearching, setIsSearching] = useState(null);
+    const [downloadingAll, setDownloadingAll] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
 
     useEffect(() => {
         loadMyExercises();
@@ -83,6 +86,31 @@ export default function WgerSyncScreen({ navigation }) {
         } finally {
             setSyncingId(null);
         }
+    };
+
+    const handleDownloadAll = async () => {
+        const toDownload = myExercises.filter(ex => ex.mediaUrl);
+        if (toDownload.length === 0) {
+            Alert.alert('Aviso', 'Nenhum exercício com mídia para baixar.');
+            return;
+        }
+
+        setDownloadingAll(true);
+        setDownloadProgress({ current: 0, total: toDownload.length });
+
+        let count = 0;
+        for (const ex of toDownload) {
+            try {
+                await downloadAndCacheMedia(ex.mediaUrl);
+                count++;
+                setDownloadProgress({ current: count, total: toDownload.length });
+            } catch (err) {
+                console.error('Download error for', ex.name, err);
+            }
+        }
+
+        setDownloadingAll(false);
+        Alert.alert('Sucesso', `${count} mídias baixadas para uso offline!`);
     };
 
     const renderExerciseItem = ({ item }) => {
@@ -162,7 +190,22 @@ export default function WgerSyncScreen({ navigation }) {
                     <Text style={styles.backText}>← Voltar</Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>Sincronizar wger</Text>
-                <Text style={styles.subtitle}>Enriqueça os exercícios com dados globais</Text>
+                <View style={styles.subtitleRow}>
+                    <Text style={styles.subtitle}>Enriqueça os exercícios com dados globais</Text>
+                    <TouchableOpacity
+                        style={[styles.downloadAllButton, downloadingAll && styles.disabledButton]}
+                        onPress={handleDownloadAll}
+                        disabled={downloadingAll || loading}
+                    >
+                        {downloadingAll ? (
+                            <Text style={styles.downloadButtonText}>
+                                {downloadProgress.current}/{downloadProgress.total} ⏳
+                            </Text>
+                        ) : (
+                            <Text style={styles.downloadButtonText}>📥 Baixar Tudo</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {loading ? (
@@ -201,6 +244,26 @@ const styles = StyleSheet.create({
     subtitle: {
         ...typography.caption,
         color: colors.textSecondary,
+        flex: 1,
+    },
+    subtitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    downloadAllButton: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 4,
+        borderRadius: borderRadius.sm,
+    },
+    disabledButton: {
+        backgroundColor: colors.surfaceLight,
+    },
+    downloadButtonText: {
+        ...typography.small,
+        color: colors.text,
+        fontWeight: 'bold',
     },
     list: {
         paddingHorizontal: spacing.lg,

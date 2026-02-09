@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { Image } from 'expo-image';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
 import { getExerciseAlternatives } from '../../../services/exercises.service';
+import { getLocalMediaPath, downloadAndCacheMedia } from '../../../services/media.service';
 
 export default function ExerciseDetailScreen({ route, navigation }) {
     const { exercise } = route.params;
     const [alternatives, setAlternatives] = useState([]);
     const [loadingAlternatives, setLoadingAlternatives] = useState(true);
+    const [localUri, setLocalUri] = useState(null);
 
     // Helper robust para parse de JSON
     const safeParse = (data, fallback) => {
@@ -27,7 +29,22 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
     useEffect(() => {
         loadAlternatives();
+        checkOfflineMedia();
     }, [exercise]);
+
+    const checkOfflineMedia = async () => {
+        if (!exercise.mediaUrl) return;
+
+        // 1. Tenta pegar o que já tem local
+        const path = await getLocalMediaPath(exercise.mediaUrl);
+        if (path) {
+            setLocalUri(path);
+        } else {
+            // 2. Se não tem, baixa em background para as próximas vezes
+            const newPath = await downloadAndCacheMedia(exercise.mediaUrl);
+            if (newPath) setLocalUri(newPath);
+        }
+    };
 
     const loadAlternatives = async () => {
         try {
@@ -84,9 +101,9 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
             {/* Área da mídia (GIF/Imagem) */}
             <View style={styles.mediaContainer}>
-                {exercise.mediaUrl ? (
+                {localUri || exercise.mediaUrl ? (
                     <Image
-                        source={{ uri: exercise.mediaUrl }}
+                        source={{ uri: localUri || exercise.mediaUrl }}
                         style={styles.media}
                         contentFit="cover"
                         cachePolicy="memory-disk"
@@ -102,7 +119,14 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 
             {/* Nome do exercício */}
             <View style={styles.content}>
-                <Text style={styles.title}>{exercise.name}</Text>
+                <View style={styles.titleRow}>
+                    <Text style={styles.title}>{exercise.name}</Text>
+                    {localUri && (
+                        <View style={styles.offlineBadge}>
+                            <Text style={styles.offlineBadgeText}>✓ Offline Ready</Text>
+                        </View>
+                    )}
+                </View>
 
                 {/* Músculos (wger Data) */}
                 {((muscleMapping.primary && muscleMapping.primary.length > 0) || (muscleMapping.secondary && muscleMapping.secondary.length > 0)) && (
@@ -212,10 +236,29 @@ const styles = StyleSheet.create({
         padding: spacing.lg,
         paddingBottom: 50,
     },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: spacing.md,
+    },
     title: {
         ...typography.h1,
         color: colors.text,
-        marginBottom: spacing.md,
+        flex: 1,
+    },
+    offlineBadge: {
+        backgroundColor: colors.primary + '20',
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 2,
+        borderRadius: borderRadius.sm,
+        marginLeft: spacing.sm,
+    },
+    offlineBadgeText: {
+        ...typography.caption,
+        color: colors.primary,
+        fontSize: 10,
+        fontWeight: '700',
     },
     musclesSection: {
         marginBottom: spacing.lg,
