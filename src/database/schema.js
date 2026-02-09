@@ -51,7 +51,10 @@ export const exercises = sqliteTable('exercises', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
     mediaUrl: text('media_url'),
-    instructions: text('instructions'), // JSON string: ["passo1", "passo2"]
+    instructions: text('instructions'), // Simple instructions
+    wgerId: integer('wger_id'),
+    wgerDescription: text('wger_description'),
+    muscleMapping: text('muscle_mapping'), // JSON string with muscle names/ids
     muscleGroupId: integer('muscle_group_id').references(() => muscleGroups.id),
 });
 

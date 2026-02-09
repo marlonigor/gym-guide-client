@@ -9,13 +9,21 @@ export default function ExerciseDetailScreen({ route, navigation }) {
     const [alternatives, setAlternatives] = useState([]);
     const [loadingAlternatives, setLoadingAlternatives] = useState(true);
 
-    // Parse das instruções (vem como JSON string)
-    let instructions = [];
-    try {
-        instructions = JSON.parse(exercise.instructions || '[]');
-    } catch (e) {
-        instructions = [];
-    }
+    // Helper robust para parse de JSON
+    const safeParse = (data, fallback) => {
+        if (!data) return fallback;
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            // Se for string mas não JSON, retorna como está ou no fallback
+            return typeof data === 'string' ? data : fallback;
+        }
+    };
+
+    let parsedInstructions = safeParse(exercise.instructions, []);
+    // Se não for array (ex: string pura do CSV), transforma em array
+    const instructions = Array.isArray(parsedInstructions) ? parsedInstructions : [parsedInstructions.toString()];
+    const muscleMapping = safeParse(exercise.muscleMapping, { primary: [], secondary: [] });
 
     useEffect(() => {
         loadAlternatives();
@@ -96,7 +104,34 @@ export default function ExerciseDetailScreen({ route, navigation }) {
             <View style={styles.content}>
                 <Text style={styles.title}>{exercise.name}</Text>
 
-                {/* Instruções */}
+                {/* Músculos (wger Data) */}
+                {((muscleMapping.primary && muscleMapping.primary.length > 0) || (muscleMapping.secondary && muscleMapping.secondary.length > 0)) && (
+                    <View style={styles.musclesSection}>
+                        <Text style={styles.sectionSubtitle}>Músculos Trabalhados</Text>
+                        <View style={styles.flexRow}>
+                            {muscleMapping.primary?.map((m, i) => (
+                                <View key={`p-${i}`} style={[styles.badge, styles.primaryBadge]}>
+                                    <Text style={styles.badgeText}>{m.name || m}</Text>
+                                </View>
+                            ))}
+                            {muscleMapping.secondary?.map((m, i) => (
+                                <View key={`s-${i}`} style={[styles.badge, styles.secondaryBadge]}>
+                                    <Text style={styles.badgeText}>{m.name || m}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Descrição Técnica (wger) */}
+                {exercise.wgerDescription && (
+                    <View style={styles.descriptionContainer}>
+                        <Text style={styles.sectionTitle}>Descrição Técnica</Text>
+                        <Text style={styles.descriptionText}>
+                            {exercise.wgerDescription.replace(/<[^>]*>?/gm, '')}
+                        </Text>
+                    </View>
+                )}
                 <View style={styles.instructionsContainer}>
                     <Text style={styles.sectionTitle}>Como executar</Text>
 
@@ -180,7 +215,45 @@ const styles = StyleSheet.create({
     title: {
         ...typography.h1,
         color: colors.text,
+        marginBottom: spacing.md,
+    },
+    musclesSection: {
         marginBottom: spacing.lg,
+    },
+    flexRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.sm,
+        marginTop: spacing.xs,
+    },
+    badge: {
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 4,
+        borderRadius: borderRadius.sm,
+    },
+    primaryBadge: {
+        backgroundColor: colors.primary + '30',
+        borderWidth: 1,
+        borderColor: colors.primary,
+    },
+    secondaryBadge: {
+        backgroundColor: colors.surfaceLight,
+    },
+    badgeText: {
+        ...typography.small,
+        color: colors.text,
+        textTransform: 'capitalize',
+    },
+    descriptionContainer: {
+        backgroundColor: colors.surface,
+        borderRadius: borderRadius.lg,
+        padding: spacing.lg,
+        marginBottom: spacing.lg,
+    },
+    descriptionText: {
+        ...typography.body,
+        color: colors.textSecondary,
+        lineHeight: 22,
     },
     instructionsContainer: {
         backgroundColor: colors.surface,

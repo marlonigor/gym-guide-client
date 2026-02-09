@@ -37,6 +37,9 @@ const createTablesSql = `
     name TEXT NOT NULL,
     media_url TEXT,
     instructions TEXT,
+    wger_id INTEGER,
+    wger_description TEXT,
+    muscle_mapping TEXT,
     muscle_group_id INTEGER,
     FOREIGN KEY (muscle_group_id) REFERENCES muscle_groups (id)
   );
@@ -234,32 +237,60 @@ const exerciseTargetsData = [
 
 export async function seedDatabase() {
   try {
-    console.log('⏳ Iniciando Seed...');
+    console.log('⏳ Iniciando Purge e Seed...');
 
-    // 1. Criar Tabelas
-    await expoDb.execAsync(createTablesSql);
+    // 1. Desabilitar FKs para permitir limpeza total
+    expoDb.execSync('PRAGMA foreign_keys = OFF;');
 
-    console.log('🧹 Tabelas recriadas!');
+    // 2. Executar DDL em bloco único síncrono para garantir integridade
+    // Removendo comentários e espaços extras para evitar problemas de parsing do driver
+    const cleanSql = createTablesSql
+      .replace(/--.*$/gm, '') // Remove comentários SQL
+      .replace(/\s+/g, ' ')   // Normaliza espaços
+      .trim();
 
-    // 3. Inserir Dados Base
+    expoDb.execSync(cleanSql);
+    console.log('🧹 Tabelas recriadas com sucesso!');
+
+    // 3. Reabilitar FKs
+    expoDb.execSync('PRAGMA foreign_keys = ON;');
+
+    // 4. Inserir Dados Base
     await db.insert(muscleGroups).values(muscleGroupsData);
     await db.insert(subMuscles).values(subMusclesData);
     await db.insert(equipments).values(equipmentsData);
-    console.log('✅ Dados base inseridos!');
+    console.log('✅ Dados base (Grupos/Sub/Equip) inseridos!');
 
-    // 4. Inserir Exercícios
-    await db.insert(exercises).values(exercisesData);
+    // 5. Inserir Exercícios
+    // Garantindo que nenhum campo seja undefined para o driver nativo
+    const exercisesToInsert = exercisesData.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      muscleGroupId: ex.muscleGroupId,
+      mediaUrl: ex.mediaUrl || null,
+      instructions: ex.instructions || null,
+      wgerId: null,
+      wgerDescription: null,
+      muscleMapping: null
+    }));
+
+    await db.insert(exercises).values(exercisesToInsert);
     console.log('✅ Exercícios inseridos!');
 
-    // 5. Inserir Relações
+    // 6. Inserir Relações
     await db.insert(exerciseEquipments).values(exerciseEquipmentsData);
     await db.insert(exerciseTargets).values(exerciseTargetsData);
-    console.log('✅ Relações inseridas!');
+    console.log('✅ Relações N:N inseridas!');
 
     console.log('🌱 Seed concluído com sucesso!');
     return { success: true };
   } catch (error) {
-    console.error('❌ Erro no seed:', error);
-    return { success: false, error };
+    console.error('❌ Erro CRÍTICO no seed:', error);
+    // Tenta avisar o usuário sobre o erro técnico real
+    const errorMessage = error.message || 'Erro desconhecido no banco de dados';
+    return { success: false, error: { message: errorMessage } };
+  } finally {
+    // Garantir que FKs voltem ao normal aconteça o que acontecer
+    try { expoDb.execSync('PRAGMA foreign_keys = ON;'); } catch (e) { }
   }
 }

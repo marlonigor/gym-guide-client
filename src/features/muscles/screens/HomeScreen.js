@@ -60,8 +60,11 @@ export default function HomeScreen({ navigation }) {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={styles.title}>GymGuide</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('WgerSync')} style={{ marginRight: spacing.md }}>
+                            <Text style={{ color: colors.success, fontSize: 13 }}>🌍 Sync</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => navigation.navigate('ImportGifs')} style={{ marginRight: spacing.md }}>
-                            <Text style={{ color: colors.primary, fontSize: 13 }}>⚙️ Admin</Text>
+                            <Text style={{ color: colors.primary, fontSize: 13 }}>⚙️ GIF</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={resetSetup}>
                             <Text style={{ color: colors.error, fontSize: 12 }}>Reset Data</Text>
