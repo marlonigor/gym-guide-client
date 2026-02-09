@@ -59,9 +59,14 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={styles.title}>GymGuide</Text>
-                    <TouchableOpacity onPress={resetSetup}>
-                        <Text style={{ color: colors.error, fontSize: 12 }}>Reset Data</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('ImportGifs')} style={{ marginRight: spacing.md }}>
+                            <Text style={{ color: colors.primary, fontSize: 13 }}>⚙️ Admin</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={resetSetup}>
+                            <Text style={{ color: colors.error, fontSize: 12 }}>Reset Data</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 <Text style={styles.subtitle}>Escolha o grupo muscular</Text>
             </View>
@@ -167,6 +172,6 @@ const styles = StyleSheet.create({
     },
     resetButtonText: {
         color: colors.text,
-        ...typography.button,
+        ...typography.h3,
     },
 });

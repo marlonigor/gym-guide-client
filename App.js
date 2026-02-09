@@ -10,6 +10,7 @@ import SubMusclesScreen from './src/features/muscles/screens/SubMusclesScreen';
 import ExercisesScreen from './src/features/exercises/screens/ExercisesScreen';
 import ExerciseDetailScreen from './src/features/exercises/screens/ExerciseDetailScreen';
 import SetupScreen from './src/features/setup/screens/SetupScreen';
+import ImportGifsScreen from './src/features/admin/screens/ImportGifsScreen';
 
 // Theme
 import { colors } from './src/theme';
@@ -89,6 +90,7 @@ export default function App() {
               <Stack.Screen name="SubMuscles" component={SubMusclesScreen} />
               <Stack.Screen name="Exercises" component={ExercisesScreen} />
               <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
+              <Stack.Screen name="ImportGifs" component={ImportGifsScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         )}

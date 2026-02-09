@@ -126,8 +126,8 @@ const equipmentsData = [
 
 const exercisesData = [
   // Peitoral
-  { id: 1, name: 'Supino Inclinado (Halteres)', muscleGroupId: 1, instructions: '["Banco 45 graus", "Empurre halteres para cima"]' },
-  { id: 2, name: 'Supino Reto (Barra)', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra", "Desça até o peito", "Empurre"]' },
+  { id: 1, name: 'Supino Inclinado (Halteres)', muscleGroupId: 1, instructions: '["Banco 45 graus", "Empurre halteres para cima"]', mediaUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2Q0YjJjMzQ1N2YzN2Y4ZjY4YjY4YjY4YjY4YjY4YjY4YjY4/3o7TQA7J9r625ld1MA/giphy.gif' },
+  { id: 2, name: 'Supino Reto (Barra)', muscleGroupId: 1, instructions: '["Deite no banco", "Segure a barra", "Desça até o peito", "Empurre"]', mediaUrl: 'https://media.giphy.com/media/l0HlPtbGpcnqa0fja/giphy.gif' },
   { id: 3, name: 'Crossover (Polia)', muscleGroupId: 1, instructions: '["Puxe as polias para baixo", "Contraia o peito"]' },
   { id: 4, name: 'Supino Inclinado (Máquina)', muscleGroupId: 1, instructions: '["Ajuste o assento", "Empurre a máquina"]' }, // NEW: Alternative for 101
   { id: 5, name: 'Flexão Declinada', muscleGroupId: 1, instructions: '["Pés elevados", "Mãos no chão", "Flexione"]' }, // NEW: Bodyweight Alternative for 101/102

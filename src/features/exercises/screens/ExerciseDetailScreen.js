@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { colors, spacing, borderRadius, typography } from '../../../theme';
 import { getExerciseAlternatives } from '../../../services/exercises.service';
 
@@ -79,7 +80,9 @@ export default function ExerciseDetailScreen({ route, navigation }) {
                     <Image
                         source={{ uri: exercise.mediaUrl }}
                         style={styles.media}
-                        resizeMode="cover"
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        priority="high"
                     />
                 ) : (
                     <View style={styles.mediaPlaceholder}>
