@@ -74,6 +74,13 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.subtitle}>Escolha o grupo muscular</Text>
             </View>
 
+            <TouchableOpacity
+                style={styles.startWorkoutButton}
+                onPress={() => navigation.navigate('ActiveWorkout')}
+            >
+                <Text style={styles.startWorkoutText}>🏋️ Iniciar Novo Treino</Text>
+            </TouchableOpacity>
+
             {groups.length === 0 ? (
                 <View style={styles.emptyState}>
                     <Text style={styles.emptyText}>Nenhum dado encontrado.</Text>
@@ -176,5 +183,23 @@ const styles = StyleSheet.create({
     resetButtonText: {
         color: colors.text,
         ...typography.h3,
+    },
+    startWorkoutButton: {
+        backgroundColor: colors.primary,
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+        borderRadius: borderRadius.lg,
+        alignItems: 'center',
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 6,
+    },
+    startWorkoutText: {
+        ...typography.h3,
+        color: colors.text,
+        fontWeight: 'bold',
     },
 });

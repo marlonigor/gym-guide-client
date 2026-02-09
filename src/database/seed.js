@@ -3,6 +3,9 @@ import { exercises, muscleGroups, equipments, subMuscles, exerciseTargets, exerc
 
 // SQL para criar tabelas (Alinhado com schema.js)
 const createTablesSql = `
+  DROP TABLE IF EXISTS workout_sets;
+  DROP TABLE IF EXISTS workout_exercises;
+  DROP TABLE IF EXISTS workouts;
   DROP TABLE IF EXISTS exercise_equipments;
   DROP TABLE IF EXISTS exercise_targets;
   DROP TABLE IF EXISTS exercises;
@@ -57,6 +60,37 @@ const createTablesSql = `
     equipment_id INTEGER,
     FOREIGN KEY (exercise_id) REFERENCES exercises (id),
     FOREIGN KEY (equipment_id) REFERENCES equipments (id)
+  );
+
+  CREATE TABLE IF NOT EXISTS workouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    date TEXT NOT NULL,
+    start_time TEXT,
+    end_time TEXT,
+    status TEXT DEFAULT 'ongoing',
+    notes TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS workout_exercises (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workout_id INTEGER,
+    exercise_id INTEGER,
+    "order" INTEGER NOT NULL,
+    notes TEXT,
+    FOREIGN KEY (workout_id) REFERENCES workouts (id),
+    FOREIGN KEY (exercise_id) REFERENCES exercises (id)
+  );
+
+  CREATE TABLE IF NOT EXISTS workout_sets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workout_exercise_id INTEGER,
+    reps INTEGER,
+    weight INTEGER,
+    rpe INTEGER,
+    rest_time INTEGER,
+    is_completed INTEGER DEFAULT 0,
+    FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercises (id)
   );
 `;
 

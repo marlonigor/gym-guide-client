@@ -139,3 +139,15 @@ export const getExerciseAlternatives = async (subMuscleId, excludeExerciseId) =>
         return [];
     }
 };
+
+export const searchExercises = async (query) => {
+    try {
+        return await db.query.exercises.findMany({
+            where: (ex, { like }) => like(ex.name, `%${query}%`),
+            limit: 20
+        });
+    } catch (error) {
+        console.error('Error searching exercises:', error);
+        return [];
+    }
+};

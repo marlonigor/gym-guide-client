@@ -12,6 +12,7 @@ import ExerciseDetailScreen from './src/features/exercises/screens/ExerciseDetai
 import SetupScreen from './src/features/setup/screens/SetupScreen';
 import ImportGifsScreen from './src/features/admin/screens/ImportGifsScreen';
 import WgerSyncScreen from './src/features/admin/screens/WgerSyncScreen';
+import ActiveWorkoutScreen from './src/features/workouts/screens/ActiveWorkoutScreen';
 
 // Theme
 import { colors } from './src/theme';
@@ -93,6 +94,7 @@ export default function App() {
               <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} />
               <Stack.Screen name="ImportGifs" component={ImportGifsScreen} />
               <Stack.Screen name="WgerSync" component={WgerSyncScreen} />
+              <Stack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         )}
